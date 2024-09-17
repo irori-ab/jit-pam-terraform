@@ -73,3 +73,5 @@ steps:
   - | 
       tofu apply -auto-approve
 # [END tf-apply]      
+options:
+  logging: CLOUD_LOGGING_ONLY
