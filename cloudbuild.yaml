@@ -1,0 +1,75 @@
+
+
+steps:
+- id: 'branch name'
+  name: 'alpine'
+  entrypoint: 'sh'  
+  args: 
+  - '-c'
+  - | 
+      echo "***********************"
+      echo "$BRANCH_NAME"
+      echo "***********************"
+
+- id: 'request and poll PAM grant'
+  name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:latest'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+      echo "Creating grant request..."
+      NAME="$(gcloud beta pam grants create \
+              --entitlement=cloud-storage-admin-jit-pam \
+              --requested-duration=3600s \
+              --justification="$TRIGGER_NAME : $COMMIT_SHA" \
+              --location=global \
+              --project="${PROJECT_ID}" \
+              --format='value(name)')"
+
+      # initial delay
+      echo "Initial delay 30s..."
+      sleep 30 
+
+      STATE=start
+      while [[ "$STATE" != "ACTIVE"]]
+      do
+        echo "Sleeping 30s..."
+        sleep 30
+        STATE="$(gcloud beta pam grants search \
+              --entitlement=cloud-storage-admin-jit-pam \
+              --location=global \
+              --project="${PROJECT_ID}" \
+              --caller-relationship=had-created \
+              --format='value(state)')"
+        echo "State: $STATE"
+      done
+
+
+- id: 'init'
+  name: 'ghcr.io/opentofu/opentofu:1.8.2'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+      tofu init
+
+
+# [START tf-plan]
+- id: 'plan'
+  name: 'ghcr.io/opentofu/opentofu:1.8.2'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - | 
+      tofu plan
+# [END tf-plan]
+
+# [START tf-apply]
+- id: 'tf apply'
+  name: 'ghcr.io/opentofu/opentofu:1.8.2'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - | 
+      tofu apply -auto-approve
+# [END tf-apply]      
