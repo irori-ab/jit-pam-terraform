@@ -29,12 +29,13 @@ resource "google_storage_bucket_object" "index" {
   name   = "index.html"
   
   content_type = "text/html; charset=utf-8"
+  cache_control = "public, max-age=60"
 
   content = <<-EOT
   <html>
     <body>
       <h1>JIT! PAM!</h1>
-      <p>Ka-pow! Tjoff!</p>
+      <p>Ka-pow!</p>
     </body>
   </html>
   EOT

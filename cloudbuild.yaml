@@ -27,12 +27,14 @@ steps:
               --project="${PROJECT_ID}" \
               --format='value(name)')"
 
+      echo "$$NAME" > /workspace/name.txt
+
       # initial delay
       echo "Initial delay 30s..."
       sleep 30 
 
       STATE=start
-      while [[ "$$STATE" != "ACTIVE" ]]
+      while [ "$$STATE" != "ACTIVE" ]
       do
         echo "Sleeping 30s..."
         sleep 30
@@ -45,6 +47,9 @@ steps:
               --format='value(state)')"
         echo "State: $$STATE"
       done
+
+      # allow to take effect
+      sleep 60 
 
 
 - id: 'init'
@@ -63,7 +68,7 @@ steps:
   args: 
   - '-c'
   - | 
-      tofu plan
+      tofu plan -var="project=${PROJECT_ID}"
 # [END tf-plan]
 
 # [START tf-apply]
@@ -73,7 +78,32 @@ steps:
   args: 
   - '-c'
   - | 
-      tofu apply -auto-approve
+      tofu apply -auto-approve -var="project=${PROJECT_ID}"
+
+- id: 'revoke grant'
+  name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:latest'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+      set -e
+      echo "Revoking grant request..."
+      # name: projects/my-project/locations/global/entitlements/ENTITLEMENT_ID/grants/GRANT_ID
+      NAME="$(cat /workspace/name.txt )"
+
+      GRANT_ID="$(echo "$${NAME}" | cut -d '/' -f 8)"
+      ENTITLEMENT_ID="$(echo "$${NAME}" | cut -d '/' -f 6)"
+
+      echo "Grant ID: $$GRANT_ID"
+      echo "Entitlement: $$ENTITLEMENT_ID"
+
+      gcloud beta pam grants revoke \
+        "$$GRANT_ID" \
+        --entitlement="$$ENTITLEMENT_ID" \
+        --reason="apply complete" \
+        --location=global \
+        --project="${PROJECT_ID}"
+
 # [END tf-apply]      
 options:
   logging: CLOUD_LOGGING_ONLY
