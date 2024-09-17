@@ -17,6 +17,7 @@ steps:
   args: 
   - '-c'
   - |
+      set -e
       echo "Creating grant request..."
       NAME="$(gcloud beta pam grants create \
               --entitlement=cloud-storage-admin-jit-pam \
@@ -31,7 +32,7 @@ steps:
       sleep 30 
 
       STATE=start
-      while [[ "$$STATE" != "ACTIVE"]]
+      while [[ "$$STATE" != "ACTIVE" ]]
       do
         echo "Sleeping 30s..."
         sleep 30
