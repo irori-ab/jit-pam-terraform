@@ -31,7 +31,7 @@ steps:
       sleep 30 
 
       STATE=start
-      while [[ "$STATE" != "ACTIVE"]]
+      while [[ "$$STATE" != "ACTIVE"]]
       do
         echo "Sleeping 30s..."
         sleep 30
@@ -40,8 +40,9 @@ steps:
               --location=global \
               --project="${PROJECT_ID}" \
               --caller-relationship=had-created \
+              --filter="name:$$NAME" \
               --format='value(state)')"
-        echo "State: $STATE"
+        echo "State: $$STATE"
       done
 
 
