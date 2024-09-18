@@ -35,7 +35,7 @@ resource "google_storage_bucket_object" "index" {
   <html>
     <body>
       <h1>JIT! PAM!</h1>
-      <p>Ka-pow!</p>
+      <p>Ka-pow! Tjoff!</p>
     </body>
   </html>
   EOT
